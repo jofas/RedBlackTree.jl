@@ -11,10 +11,6 @@ using BenchmarkTools
 using Statistics
 
 
-# TODO:
-#       regression test time + mem/allocs
-
-
 function tree_count(arr::Vector{Float64})
   t = RBTree{Float64}()
 
