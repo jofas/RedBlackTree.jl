@@ -8,6 +8,7 @@ include("test_insert.jl")
 include("test_count_right.jl")
 include("test_geq.jl")
 
+
 @testset "test count" begin
 
   t = RBTree{Int64}()

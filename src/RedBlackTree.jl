@@ -66,7 +66,7 @@ module RedBlackTree
     for key in keys insert!(self, key) end
 
 
-  function Base.insert!(self::RBTree{T}, key) where T # {{{
+  function Base.insert!(self::RBTree{T}, key::T) where T # {{{
     x, y = self.root, Nil
 
     while x != Nil
