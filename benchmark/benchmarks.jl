@@ -15,6 +15,20 @@ using Statistics
 const test_sizes = [150_000, 200_000]
 
 
+macro regression_out(name, result, base)
+  print_(descr, bench) =
+    println(descr, ": ", repr("text/plain", bench))
+
+  return esc(quote
+    $print_("baseline $($name)", $base)
+    $print_("result $($name)", $result)
+    $print_( "compare $($name)"
+           , judge( $result, $base, time_tolerance=0.1
+                  , memory_tolerance=0.05 ) )
+  end)
+end
+
+
 @main function regression()
   res  = test_regression()
   base = BenchmarkTools.load("baseline.json")[1]
@@ -28,21 +42,8 @@ const test_sizes = [150_000, 200_000]
 
     println(r)
 
-    println("baseline insert: ", repr( "text/plain"
-                                     , base_insert ))
-    println("result insert: ", repr( "text/plain"
-                                   , res_insert ))
-    println("compare insert: ", repr("text/plain", judge(
-      res_insert, base_insert, time_tolerance=0.1,
-      memory_tolerance=0.05
-    )))
-
-    println("baseline geq: ", repr("text/plain", base_geq))
-    println("result geq: ", repr("text/plain", res_geq))
-    println("compare geq: ", repr("text/plain", judge(
-      res_geq, base_geq, time_tolerance=0.1,
-      memory_tolerance=0.05
-    )))
+    @regression_out "insert" res_insert base_insert
+    @regression_out "geq" res_geq base_geq
   end
 end
 
