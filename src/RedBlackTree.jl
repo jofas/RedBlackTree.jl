@@ -50,10 +50,11 @@ module RedBlackTree
 
   mutable struct RBTree{T}
     root::Union{Node{T}, Nothing}
+    insertions::Int64
   end
 
 
-  RBTree{T}() where T = RBTree{T}(nothing)
+  RBTree{T}() where T = RBTree{T}(nothing, 0)
 
 
   Base.length(::RBTree{T}) where T = 1
@@ -68,6 +69,8 @@ module RedBlackTree
 
 
   function Base.insert!(self::RBTree{T}, key::T) where T # {{{
+    self.insertions += 1
+
     x, y = self.root, nothing
 
     while x != nothing

@@ -34,3 +34,12 @@ end
 
   @test t1 == t2
 end
+
+
+@testset "test insertions field" begin
+  for i in 1:500
+    t = RBTree{Float64}()
+    insert!.(t, rand(i))
+    @test t.insertions == i
+  end
+end
