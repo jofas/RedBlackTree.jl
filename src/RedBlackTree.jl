@@ -8,14 +8,12 @@ module RedBlackTree
   Base.Enums.@enum Color red black
 
 
-  abstract type Nil end
+  function Base.getproperty(::Nothing, p::Symbol)
+    if p == :color       return black end
+    if p == :count       return 0 end
+    if p == :count_right return 0 end
 
-
-  function Base.getproperty(n::DataType, p::Symbol)
-    if n == Nil && p == :color return black end
-    if n == Nil && p == :count return 0 end
-    if n == Nil && p == :count_right return 0 end
-    getfield(n, p)
+    getfield(nothing, p)
   end
 
 
@@ -26,14 +24,14 @@ module RedBlackTree
     count::Int64
     count_right::Int64
 
-    parent::Union{Node, DataType}
-    left::Union{Node, DataType}
-    right::Union{Node, DataType}
+    parent::Union{Node, Nothing}
+    left::Union{Node, Nothing}
+    right::Union{Node, Nothing}
   end
 
 
-  Node(key::T, parent::Union{Node{T}, DataType}) where T =
-    Node(red, key, 1, 0, parent, Nil, Nil)
+  Node(key::T, parent::Union{Node{T}, Nothing}) where T =
+    Node(red, key, 1, 0, parent, nothing, nothing)
 
 
   function (==)(x::Node{T}, y::Node{T}) where T
@@ -51,11 +49,11 @@ module RedBlackTree
 
 
   mutable struct RBTree{T}
-    root::Union{Node{T}, DataType}
+    root::Union{Node{T}, Nothing}
   end
 
 
-  RBTree{T}() where T = RBTree{T}(Nil)
+  RBTree{T}() where T = RBTree{T}(nothing)
 
 
   (==)(x::RBTree{T}, y::RBTree{T}) where T =
@@ -67,9 +65,9 @@ module RedBlackTree
 
 
   function Base.insert!(self::RBTree{T}, key::T) where T # {{{
-    x, y = self.root, Nil
+    x, y = self.root, nothing
 
-    while x != Nil
+    while x != nothing
       y = x
 
       if key == x.key
@@ -85,7 +83,7 @@ module RedBlackTree
 
     z = Node(key, y)
 
-    if y == Nil
+    if y == nothing
       self.root = z
     elseif key < y.key
       y.left = z
@@ -101,7 +99,7 @@ module RedBlackTree
     count = 0
 
     x = self.root
-    while x ≠ Nil
+    while x ≠ nothing
       if key ≤ x.key
         count += x.count + x.count_right
         x = x.left
@@ -182,13 +180,11 @@ module RedBlackTree
 
     z.right = y.left
 
-    if y.left != Nil
-      y.left.parent = z
-    end
+    if y.left != nothing y.left.parent = z end
 
     y.parent = z.parent
 
-    if z.parent == Nil
+    if z.parent == nothing
       self.root = y
     elseif z == z.parent.left
       z.parent.left = y
@@ -209,13 +205,11 @@ module RedBlackTree
 
     z.left = y.right
 
-    if y.right != Nil
-      y.right.parent = z
-    end
+    if y.right != nothing y.right.parent = z end
 
     y.parent = z.parent
 
-    if z.parent == Nil
+    if z.parent == nothing
       self.root = y
     elseif z == z.parent.left
       z.parent.left = y
@@ -233,5 +227,5 @@ module RedBlackTree
   Σₜᵣₑₑ(x::Node{T}) where T =
     x.count + Σₜᵣₑₑ(x.left) + Σₜᵣₑₑ(x.right)
 
-  Σₜᵣₑₑ(x::DataType) = 0
+  Σₜᵣₑₑ(::Nothing) = 0
 end
