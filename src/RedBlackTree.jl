@@ -5,9 +5,73 @@ module RedBlackTree
   import Base.==
 
 
+  export CapacityVector
+
+  mutable struct CapacityVector{T} # {{{
+    container::Vector{T}
+    capacity::Int64
+    ptr::Int64
+  end
+
+
+  CapacityVector{T}(capacity) where T =
+    CapacityVector{T}( Vector{T}(undef, capacity), capacity
+                     , 0 )
+
+
+  function Base.push!( self::CapacityVector{T}, item
+                     )::Int64 where T
+    increase_if_full!(self)
+    self.container[self.ptr += 1] = item
+    self.ptr
+  end
+
+
+  Base.getindex(self::CapacityVector{T}, key) where T =
+    self.container[key]
+
+
+  Base.setindex!(self::CapacityVector{T}, v, key) where T =
+    self.container[key] = v
+
+
+  Base.firstindex(self::CapacityVector{T}) where T = 1
+  Base.firstindex(self::CapacityVector{T}, d) where T = 1
+
+
+  Base.lastindex(self::CapacityVector{T}) where T =
+    size(self.container, 1)
+
+  Base.lastindex(self::CapacityVector{T}, d) where T =
+    size(self.container, d)
+
+
+  Base.length(::CapacityVector{T}) where T = 1
+
+
+  Base.iterate(self::CapacityVector{T}) where T =
+    (self, nothing)
+
+  Base.iterate(::CapacityVector{T}, ::Nothing) where T =
+    nothing
+
+
+  function increase_if_full!( self::CapacityVector{T}
+                            ) where T
+    if size(self.container, 1) - self.ptr < 1
+      append!( self.container
+             , Vector{T}(undef, self.capacity) )
+    end
+  end
+
+
+  # }}}
+
+
   Base.Enums.@enum Color red black
 
 
+  # TODO: to property functions
   function Base.getproperty(::Nothing, p::Symbol)
     if p == :color       return black end
     if p == :count       return 0 end
@@ -24,13 +88,13 @@ module RedBlackTree
     count::Int64
     count_right::Int64
 
-    parent::Union{Node, Nothing}
-    left::Union{Node, Nothing}
-    right::Union{Node, Nothing}
+    parent::Union{Int64, Nothing}
+    left::Union{Int64, Nothing}
+    right::Union{Int64, Nothing}
   end
 
 
-  Node(key::T, parent::Union{Node{T}, Nothing}) where T =
+  Node(key::T, parent::Union{Int64, Nothing}) where T =
     Node(red, key, 1, 0, parent, nothing, nothing)
 
 
@@ -49,12 +113,17 @@ module RedBlackTree
 
 
   mutable struct RBTree{T}
-    root::Union{Node{T}, Nothing}
+    root::Union{Int64, Nothing}
+    nodes::CapacityVector{Node{T}}
+    # need to be counted, because amount of nodes not
+    # necessarily equal to the amount of insertions
     insertions::Int64
   end
 
 
-  RBTree{T}() where T = RBTree{T}(nothing, 0)
+  RBTree{T}(;capacity=2^15) where T =
+    RBTree{T}( nothing, CapacityVector{Node{T}}(capacity)
+             , 0 )
 
 
   Base.length(::RBTree{T}) where T = 1
@@ -64,53 +133,57 @@ module RedBlackTree
   Base.iterate(::RBTree{T}, ::Nothing) where T = nothing
 
 
-  (==)(x::RBTree{T}, y::RBTree{T}) where T =
-    x.root == y.root
-
-
   function Base.insert!(self::RBTree{T}, key::T) where T # {{{
     self.insertions += 1
 
-    x, y = self.root, nothing
+    if self.insertions == 1
+      root = Node(key, nothing)
+      root.color = black
+      push!(self.nodes, root)
+      self.root = 1
+      return
+    end
 
-    while x != nothing
-      y = x
+    i = self.root
+
+    while true
+      x = self.nodes[i]
 
       if key == x.key
         x.count += 1
         return
+
       elseif key < x.key
-        x = x.left
+        x.left == nothing ? break : i = x.left
+
       else
         x.count_right += 1
-        x = x.right
+
+        x.right == nothing ? break : i = x.right
       end
     end
 
-    z = Node(key, y)
+    j = push!(self.nodes, Node(key, i))
 
-    if y == nothing
-      self.root = z
-    elseif key < y.key
-      y.left = z
-    else
-      y.right = z
-    end
+    key < self.nodes[i].key ?
+      self.nodes[i].left = j : self.nodes[i].right = j
 
-    fixup!(self, z)
+    fixup!(self, j)
   end # }}}
 
 
   function geq(self::RBTree{T}, key::T)::Int64 where T # {{{
     count = 0
 
-    x = self.root
-    while x ≠ nothing
-      if key ≤ x.key
-        count += x.count + x.count_right
-        x = x.left
+    i = self.root
+    while i ≠ nothing
+      if key ≤ self.nodes[i].key
+        count +=
+          self.nodes[i].count + self.nodes[i].count_right
+
+        i = self.nodes[i].left
       else
-        x = x.right
+        i = self.nodes[i].right
       end
     end
 
@@ -118,120 +191,173 @@ module RedBlackTree
   end # }}}
 
 
-  function fixup!(self::RBTree{T}, z::Node{T}) where T # {{{
-    while z.parent.color == red
+  function fixup!(self::RBTree{T}, i::Int64) where T # {{{
+    while color(self, parent(self, i)) == red
 
-      if z.parent == z.parent.parent.left
+      p = parent(self, i)
+      gp = grandparent(self, i)
 
-        y = z.parent.parent.right
 
-        if y.color == red
+      if is_left_child(self, p)
+
+        u = right_uncle(self, i)
+
+        if color(self, u) == red
 
           # case 1
-          z.parent.color = black
-          y.color = black
-          z.parent.parent.color = red
-          z = z.parent.parent
-
+          self.nodes[p].color = black
+          self.nodes[u].color = black
+          self.nodes[gp].color = red
+          i = gp
         else
 
           # case 2
-          if z == z.parent.right
-            z = z.parent
-            left_rotate!(self, z)
+          if is_right_child(self, i)
+            i = p
+
+            left_rotate!(self, i)
+
+            p = parent(self, i)
+            gp = grandparent(self, i)
           end
 
           # case 3
-          z.parent.color = black
-          z.parent.parent.color = red
-          right_rotate!(self, z.parent.parent)
+          self.nodes[p].color = black
+          self.nodes[gp].color = red
+          right_rotate!(self, gp)
         end
 
       else
 
-        y = z.parent.parent.left
+        u = left_uncle(self, i)
 
-        if y.color == red
+        if color(self, u) == red
 
           # case 1
-          z.parent.color = black
-          y.color = black
-          z.parent.parent.color = red
-          z = z.parent.parent
+          self.nodes[p].color = black
+          self.nodes[u].color = black
+          self.nodes[gp].color = red
+          i = gp
 
         else
 
           # case 2
-          if z == z.parent.left
-            z = z.parent
-            right_rotate!(self, z)
+          if is_left_child(self, i)
+            i = p
+
+            right_rotate!(self, i)
+
+            p = parent(self, i)
+            gp = grandparent(self, i)
           end
 
           # case 3
-          z.parent.color = black
-          z.parent.parent.color = red
-          left_rotate!(self, z.parent.parent)
+          self.nodes[p].color = black
+          self.nodes[gp].color = red
+          left_rotate!(self, gp)
         end
 
       end
     end
 
-    self.root.color = black
+    self.nodes[self.root].color = black
   end # }}}
 
 
-  function left_rotate!( self::RBTree{T}, z::Node{T} # ... {{{
-                       ) where T
-    y = z.right
+  function left_rotate!(self::RBTree{T}, i::Int64) where T
+    j = right_child(self, i)
+    lj = left_child(self, j)
+    p = parent(self, i)
 
-    z.right = y.left
+    self.nodes[i].right = lj
 
-    if y.left != nothing y.left.parent = z end
+    if lj != nothing self.nodes[lj].parent = i end
 
-    y.parent = z.parent
+    self.nodes[j].parent = p
 
-    if z.parent == nothing
-      self.root = y
-    elseif z == z.parent.left
-      z.parent.left = y
+    if p == nothing
+      self.root = j
+    elseif is_left_child(self, i)
+      self.nodes[p].left = j
     else
-      z.parent.right = y
+      self.nodes[p].right = j
     end
 
-    y.left = z
-    z.parent = y
+    self.nodes[j].left = i
+    self.nodes[i].parent = j
 
-    z.count_right = Σₜᵣₑₑ(z.right)
-  end # }}}
+    self.nodes[i].count_right =
+      Σₜᵣₑₑ(self, right_child(self, i))
+  end
 
 
-  function right_rotate!( self::RBTree{T}, z::Node{T} # ... {{{
-                        ) where T
-    y = z.left
+  function right_rotate!(self::RBTree{T}, i::Int64) where T
+    j = left_child(self, i)
+    rj = right_child(self, j)
+    p = parent(self, i)
 
-    z.left = y.right
+    self.nodes[i].left = rj
 
-    if y.right != nothing y.right.parent = z end
+    if rj != nothing self.nodes[rj].parent = i end
 
-    y.parent = z.parent
+    self.nodes[j].parent = p
 
-    if z.parent == nothing
-      self.root = y
-    elseif z == z.parent.left
-      z.parent.left = y
+    if p == nothing
+      self.root = j
+    elseif is_left_child(self, i)
+      self.nodes[p].left = j
     else
-      z.parent.right = y
+      self.nodes[p].right = j
     end
 
-    y.right = z
-    z.parent = y
+    self.nodes[j].right = i
+    self.nodes[i].parent = j
 
-    y.count_right = Σₜᵣₑₑ(z)
-  end # }}}
+    self.nodes[j].count_right = Σₜᵣₑₑ(self, i)
+  end
 
 
-  Σₜᵣₑₑ(x::Node{T}) where T =
-    x.count + Σₜᵣₑₑ(x.left) + Σₜᵣₑₑ(x.right)
+  Σₜᵣₑₑ(self::RBTree{T}, i::Int64) where T =
+    self.nodes[i].count + Σₜᵣₑₑ(self, left_child(self, i)) +
+                          Σₜᵣₑₑ(self, right_child(self, i))
 
-  Σₜᵣₑₑ(::Nothing) = 0
+  Σₜᵣₑₑ(::RBTree{T}, ::Nothing) where T = 0
+
+
+  parent(self::RBTree{T}, i::Int64) where T =
+    self.nodes[i].parent
+
+
+  grandparent(self::RBTree{T}, i::Int64) where T =
+    parent(self, parent(self, i))
+
+
+  left_child(self::RBTree{T}, i::Int64) where T =
+    self.nodes[i].left
+
+
+  right_child(self::RBTree{T}, i::Int64) where T =
+    self.nodes[i].right
+
+
+  color(self::RBTree{T}, i::Int64) where T =
+    self.nodes[i].color
+
+  color(::RBTree{T}, ::Nothing) where T = black
+
+
+  is_left_child(self::RBTree{T}, i::Int64) where T =
+    i == left_child(self, parent(self, i))
+
+
+  is_right_child(self::RBTree{T}, i::Int64) where T =
+    i == right_child(self, parent(self, i))
+
+
+  left_uncle(self::RBTree{T}, i::Int64) where T =
+    left_child(self, grandparent(self, i))
+
+
+  right_uncle(self::RBTree{T}, i::Int64) where T =
+    right_child(self, grandparent(self, i))
 end

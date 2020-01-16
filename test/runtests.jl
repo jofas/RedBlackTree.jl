@@ -5,7 +5,6 @@ using .RedBlackTree
 using Test
 
 include("test_insert.jl")
-include("test_count_right.jl")
 include("test_geq.jl")
 
 
@@ -15,24 +14,7 @@ include("test_geq.jl")
 
   insert!.(t, [1, 1, 1, 1])
 
-  @test t.root.count == 4
-end
-
-
-@testset "test equality of trees" begin
-
-  t1 = RBTree{Int64}()
-  t2 = RBTree{Int64}()
-
-  @test t1 == t2
-
-  insert!.(t1, [1, 2, 3, 3, 3])
-
-  @test t1 != t2
-
-  insert!.(t2, [1, 2, 3, 3, 3])
-
-  @test t1 == t2
+  @test t.nodes[1].count == 4
 end
 
 
@@ -42,4 +24,34 @@ end
     insert!.(t, rand(i))
     @test t.insertions == i
   end
+end
+
+
+@testset "test capacity vector alloc" begin
+  c = CapacityVector{Float64}(100)
+
+  @test size(c.container, 1) == 100
+
+  push!.(c, rand(100))
+
+  @test size(c.container, 1) == 100
+
+  push!(c, rand())
+
+  @test size(c.container, 1) == 200
+end
+
+
+@testset "test capacity vector indices" begin
+  c = CapacityVector{Float64}(1)
+
+  e = rand()
+
+  push!(c, e)
+
+  @test c[1] == e
+
+  c[1] = 2.0
+
+  @test c[1] == 2.0
 end
