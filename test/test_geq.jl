@@ -1,6 +1,6 @@
 @testset "test geq example" begin
   t = RBTree{Int64}()
-  insert!(t, 1, 2, 5, 7, 8, 11, 14, 15, 4, 3, 6)
+  insert!.(t, [1, 2, 5, 7, 8, 11, 14, 15, 4, 3, 6])
 
   @test geq(t,  1) == 11
   @test geq(t,  2) == 10
@@ -27,7 +27,7 @@ end
 
     t = RBTree{Float64}()
 
-    insert!(t, arr...)
+    insert!.(t, arr)
 
     cnt(arr) = [count(s -> s >= val, arr) for val in arr]
 
