@@ -58,8 +58,8 @@ end
 function bench_regression(sizes)
   t = RBTree{Float64}()
 
-  insert_(size, tree) = insert!(tree, rand(size)...)
-  geq_(size, tree) = [geq(tree, k) for k in rand(size)]
+  insert_(size, tree) = insert!.(tree, rand(size))
+  geq_(size, tree) = geq.(t, rand(size))
 
   suite = generate_suite( sizes
                         , "insert" => (insert_, t)

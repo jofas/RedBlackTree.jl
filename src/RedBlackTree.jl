@@ -56,12 +56,15 @@ module RedBlackTree
   RBTree{T}() where T = RBTree{T}(nothing)
 
 
+  Base.length(::RBTree{T}) where T = 1
+
+
+  Base.iterate(self::RBTree{T}) where T = (self, nothing)
+  Base.iterate(::RBTree{T}, ::Nothing) where T = nothing
+
+
   (==)(x::RBTree{T}, y::RBTree{T}) where T =
     x.root == y.root
-
-
-  Base.insert!(self::RBTree{T}, keys...) where T =
-    for key in keys insert!(self, key) end
 
 
   function Base.insert!(self::RBTree{T}, key::T) where T # {{{

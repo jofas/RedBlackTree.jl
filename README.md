@@ -4,3 +4,8 @@
 
 
 ## TODO
+
+
+## Benchmarks
+
+* api from varargs to dot syntax: invariant

@@ -48,7 +48,7 @@ function grouped_out(r1::Pair, r2::Pair; comparison=false)
   println(r1.first, ": ", bench_to_str(r1.second))
   println(r2.first, ": ", bench_to_str(r2.second))
 
-  if comparison compare_out(r1.second, r2.second) end
+  if comparison compare_out(r2.second, r1.second) end
 end
 
 

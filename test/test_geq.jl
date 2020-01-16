@@ -1,4 +1,4 @@
-@testset "test geq1" begin
+@testset "test geq example" begin
   t = RBTree{Int64}()
   insert!(t, 1, 2, 5, 7, 8, 11, 14, 15, 4, 3, 6)
 
@@ -21,15 +21,16 @@
 end
 
 
-@testset "test geq2" begin
+@testset "test geq random generated" begin
   for _ in 1:500
     arr = rand(500)
-    val = arr[250]
 
     t = RBTree{Float64}()
 
     insert!(t, arr...)
 
-    @test geq(t, val) == count(s -> s >= val, arr)
+    cnt(arr) = [count(s -> s >= val, arr) for val in arr]
+
+    @test geq.(t, arr) == cnt(arr)
   end
 end

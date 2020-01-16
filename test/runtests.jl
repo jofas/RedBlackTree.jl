@@ -13,7 +13,7 @@ include("test_geq.jl")
 
   t = RBTree{Int64}()
 
-  insert!(t, 1, 1, 1, 1)
+  insert!.(t, [1, 1, 1, 1])
 
   @test t.root.count == 4
 end
@@ -26,11 +26,11 @@ end
 
   @test t1 == t2
 
-  insert!(t1, 1, 2, 3, 3, 3)
+  insert!.(t1, [1, 2, 3, 3, 3])
 
   @test t1 != t2
 
-  insert!(t2, 1, 2, 3, 3, 3)
+  insert!.(t2, [1, 2, 3, 3, 3])
 
   @test t1 == t2
 end

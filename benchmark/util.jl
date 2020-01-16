@@ -30,9 +30,9 @@ end
 function tree_count(arr::Vector{Float64})
   t = RBTree{Float64}()
 
-  insert!(t, arr...)
+  insert!.(t, arr)
 
-  [geq(t, k) for k in arr]
+  geq.(t, arr)
 end
 
 
