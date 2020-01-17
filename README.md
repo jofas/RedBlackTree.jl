@@ -11,3 +11,5 @@
 * api from varargs to dot syntax: invariant
 
 * nodes in CapacityVector: approx 80% time, 90% memory improvement
+
+* CVector -> Vector: memory improvement for 1mil, time improvement for 100

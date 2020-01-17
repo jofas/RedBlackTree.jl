@@ -5,9 +5,6 @@ module RedBlackTree
 
   import Base.==
 
-  include("../CapacityVector.jl/src/CapacityVector.jl")
-  using .CapacityVector
-
 
   Base.Enums.@enum Color red black
 
@@ -55,16 +52,15 @@ module RedBlackTree
 
   mutable struct RBTree{T}
     root::Union{Int64, Nothing}
-    nodes::CVector{Node{T}}
+    nodes::Vector{Node{T}}
     # need to be counted, because amount of nodes not
     # necessarily equal to the amount of insertions
     insertions::Int64
   end
 
 
-  RBTree{T}(;capacity=2^15) where T =
-    RBTree{T}( nothing, CVector{Node{T}}(capacity)
-             , 0 )
+  RBTree{T}() where T =
+    RBTree{T}(nothing, Vector{Node{T}}(undef, 0), 0)
 
 
   Base.length(::RBTree{T}) where T = 1
@@ -104,7 +100,8 @@ module RedBlackTree
       end
     end
 
-    j = push!(self.nodes, Node(key, i))
+    push!(self.nodes, Node(key, i))
+    j = length(self.nodes)
 
     key < self.nodes[i].key ?
       self.nodes[i].left = j : self.nodes[i].right = j
