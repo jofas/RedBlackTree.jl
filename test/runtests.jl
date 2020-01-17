@@ -23,6 +23,6 @@ end
   for i in 1:500
     t = RBTree{Float64}()
     insert!.(t, rand(i))
-    @test t.insertions == i
+    @test insertions(t) == i
   end
 end

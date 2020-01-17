@@ -1,22 +1,12 @@
 module RedBlackTree
 
-  export RBTree, geq
+  export RBTree, geq, insertions
 
 
   import Base.==
 
 
-  Base.Enums.@enum Color red black
-
-
-  # TODO: to property functions
-  function Base.getproperty(::Nothing, p::Symbol)
-    if p == :color       return black end
-    if p == :count       return 0 end
-    if p == :count_right return 0 end
-
-    getfield(nothing, p)
-  end
+  Base.Enums.@enum Color::Bool red black
 
 
   mutable struct Node{T}
@@ -24,6 +14,7 @@ module RedBlackTree
     key::T
 
     count::Int64
+    count_left::Int64
     count_right::Int64
 
     parent::Union{Int64, Nothing}
@@ -33,34 +24,21 @@ module RedBlackTree
 
 
   Node(key::T, parent::Union{Int64, Nothing}) where T =
-    Node(red, key, 1, 0, parent, nothing, nothing)
-
-
-  function (==)(x::Node{T}, y::Node{T}) where T
-    # only left and right children are tested, since other-
-    # wise a stack overflow will return, since an endless
-    # count of recursive calls to == are made
-    for s in ( :color, :key, :count, :count_right, :left
-             , :right )
-      if getproperty(x, s) != getproperty(y, s)
-        return false
-      end
-    end
-    true
-  end
+    Node(red, key, 1, 0, 0, parent, nothing, nothing)
 
 
   mutable struct RBTree{T}
     root::Union{Int64, Nothing}
     nodes::Vector{Node{T}}
-    # need to be counted, because amount of nodes not
-    # necessarily equal to the amount of insertions
-    insertions::Int64
   end
 
 
+  include("macros.jl")
+  include("util.jl")
+
+
   RBTree{T}() where T =
-    RBTree{T}(nothing, Vector{Node{T}}(undef, 0), 0)
+    RBTree{T}(nothing, Vector{Node{T}}(undef, 0))
 
 
   Base.length(::RBTree{T}) where T = 1
@@ -71,42 +49,13 @@ module RedBlackTree
 
 
   function Base.insert!(self::RBTree{T}, key::T) where T # {{{
-    self.insertions += 1
+    parent = get_leaf_and_update_count!(self, key)
 
-    if self.insertions == 1
-      root = Node(key, nothing)
-      root.color = black
-      push!(self.nodes, root)
-      self.root = 1
-      return
-    end
+    child = add_node!(self, key, parent)
 
-    i = self.root
+    set_child!(self, parent, child)
 
-    while true
-      x = self.nodes[i]
-
-      if key == x.key
-        x.count += 1
-        return
-
-      elseif key < x.key
-        x.left == nothing ? break : i = x.left
-
-      else
-        x.count_right += 1
-
-        x.right == nothing ? break : i = x.right
-      end
-    end
-
-    push!(self.nodes, Node(key, i))
-    j = length(self.nodes)
-
-    key < self.nodes[i].key ?
-      self.nodes[i].left = j : self.nodes[i].right = j
-
-    fixup!(self, j)
+    fixup!(self, child)
   end # }}}
 
 
@@ -115,13 +64,13 @@ module RedBlackTree
 
     i = self.root
     while i ≠ nothing
-      if key ≤ self.nodes[i].key
-        count +=
-          self.nodes[i].count + self.nodes[i].count_right
+      if key ≤ @get :key i
 
-        i = self.nodes[i].left
+        count += @get(:count, i) + @get(:count_right, i)
+
+        i = @get :left i
       else
-        i = self.nodes[i].right
+        i = @get :right i
       end
     end
 
@@ -129,23 +78,29 @@ module RedBlackTree
   end # }}}
 
 
-  function fixup!(self::RBTree{T}, i::Int64) where T # {{{
-    while color(self, parent(self, i)) == red
+  insertions(self::RBTree{T}) where T =
+    @get(:count, self.root) +
+    @get(:count_left, self.root) +
+    @get(:count_right, self.root)
 
-      p = parent(self, i)
-      gp = grandparent(self, i)
+
+  function fixup!(self::RBTree{T}, i::Int64) where T # {{{
+    while @get(:color, @get(:parent, i)) == red
+
+      p = @get :parent i
+      gp = @get :grandparent i
 
 
       if is_left_child(self, p)
 
-        u = right_uncle(self, i)
+        u = @get :uncle i
 
-        if color(self, u) == red
+        if @get(:color, u) == red
 
           # case 1
-          self.nodes[p].color = black
-          self.nodes[u].color = black
-          self.nodes[gp].color = red
+          @set :color p black
+          @set :color u black
+          @set :color gp red
           i = gp
         else
 
@@ -155,26 +110,26 @@ module RedBlackTree
 
             left_rotate!(self, i)
 
-            p = parent(self, i)
-            gp = grandparent(self, i)
+            p = @get :parent i
+            gp = @get :grandparent i
           end
 
           # case 3
-          self.nodes[p].color = black
-          self.nodes[gp].color = red
+          @set :color p black
+          @set :color gp red
           right_rotate!(self, gp)
         end
 
       else
 
-        u = left_uncle(self, i)
+        u = @get :uncle i
 
-        if color(self, u) == red
+        if @get(:color, u) == red
 
           # case 1
-          self.nodes[p].color = black
-          self.nodes[u].color = black
-          self.nodes[gp].color = red
+          @set :color p black
+          @set :color u black
+          @set :color gp red
           i = gp
 
         else
@@ -185,117 +140,50 @@ module RedBlackTree
 
             right_rotate!(self, i)
 
-            p = parent(self, i)
-            gp = grandparent(self, i)
+            p = @get :parent i
+            gp = @get :grandparent i
           end
 
           # case 3
-          self.nodes[p].color = black
-          self.nodes[gp].color = red
+          @set :color p black
+          @set :color gp red
           left_rotate!(self, gp)
         end
 
       end
     end
 
-    self.nodes[self.root].color = black
+    @set :color self.root black
   end # }}}
 
 
-  function left_rotate!(self::RBTree{T}, i::Int64) where T
-    j = right_child(self, i)
-    lj = left_child(self, j)
-    p = parent(self, i)
+  # left_rotate! and right_rotate! {{{
+  for (dir, dirᵣₑᵥ, dir_count, dir_countᵣₑᵥ) in (
+    (:(:left), :(:right), :(:count_left), :(:count_right)),
+    (:(:right), :(:left), :(:count_right), :(:count_left))
+  )
+    fn = dir == :(:left) ? (:left_rotate!) :
+                           (:right_rotate!)
 
-    self.nodes[i].right = lj
+    @eval begin
+      function $fn(self::RBTree{T}, rotator::Int64) where T
+        rotating_child = @get $dirᵣₑᵥ rotator
 
-    if lj != nothing self.nodes[lj].parent = i end
+        new_child = @get $dir rotating_child
+        @new_child $dirᵣₑᵥ rotator new_child
 
-    self.nodes[j].parent = p
+        p = @get :parent rotator
+        @set :parent rotating_child p
+        set_child!(self, p, rotating_child)
 
-    if p == nothing
-      self.root = j
-    elseif is_left_child(self, i)
-      self.nodes[p].left = j
-    else
-      self.nodes[p].right = j
+        @new_child $dir rotating_child rotator
+
+        # rotator must be set first, because otherwise the
+        # value for the rotating child will be wrong
+        @set_count $dir_countᵣₑᵥ rotator new_child
+        @set_count $dir_count rotating_child rotator
+      end
     end
-
-    self.nodes[j].left = i
-    self.nodes[i].parent = j
-
-    self.nodes[i].count_right =
-      Σₜᵣₑₑ(self, right_child(self, i))
   end
-
-
-  function right_rotate!(self::RBTree{T}, i::Int64) where T
-    j = left_child(self, i)
-    rj = right_child(self, j)
-    p = parent(self, i)
-
-    self.nodes[i].left = rj
-
-    if rj != nothing self.nodes[rj].parent = i end
-
-    self.nodes[j].parent = p
-
-    if p == nothing
-      self.root = j
-    elseif is_left_child(self, i)
-      self.nodes[p].left = j
-    else
-      self.nodes[p].right = j
-    end
-
-    self.nodes[j].right = i
-    self.nodes[i].parent = j
-
-    self.nodes[j].count_right = Σₜᵣₑₑ(self, i)
-  end
-
-
-  Σₜᵣₑₑ(self::RBTree{T}, i::Int64) where T =
-    self.nodes[i].count + Σₜᵣₑₑ(self, left_child(self, i)) +
-                          Σₜᵣₑₑ(self, right_child(self, i))
-
-  Σₜᵣₑₑ(::RBTree{T}, ::Nothing) where T = 0
-
-
-  parent(self::RBTree{T}, i::Int64) where T =
-    self.nodes[i].parent
-
-
-  grandparent(self::RBTree{T}, i::Int64) where T =
-    parent(self, parent(self, i))
-
-
-  left_child(self::RBTree{T}, i::Int64) where T =
-    self.nodes[i].left
-
-
-  right_child(self::RBTree{T}, i::Int64) where T =
-    self.nodes[i].right
-
-
-  color(self::RBTree{T}, i::Int64) where T =
-    self.nodes[i].color
-
-  color(::RBTree{T}, ::Nothing) where T = black
-
-
-  is_left_child(self::RBTree{T}, i::Int64) where T =
-    i == left_child(self, parent(self, i))
-
-
-  is_right_child(self::RBTree{T}, i::Int64) where T =
-    i == right_child(self, parent(self, i))
-
-
-  left_uncle(self::RBTree{T}, i::Int64) where T =
-    left_child(self, grandparent(self, i))
-
-
-  right_uncle(self::RBTree{T}, i::Int64) where T =
-    right_child(self, grandparent(self, i))
+  # }}}
 end
