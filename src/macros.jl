@@ -7,8 +7,15 @@
 
 
 macro get(property, node)
+
+  color(self::RBTree{T}, i::Int64) where T =
+    self.nodes[i].color
+
+  color(::RBTree{T}, ::Nothing) where T = black
+
+
   if property == :(:color)
-    return esc(:(color(self, $node)))
+    return esc(:($color(self, $node)))
 
   elseif property == :(:grandparent)
     return esc(:(@get(:parent, @get(:parent, $node))))
@@ -31,29 +38,44 @@ end
 
 
 macro set(property, node, val)
-  if property == :(:parent)
-    return esc(quote
-      if $node != nothing
-        setproperty!(self.nodes[$node], $property, $val)
-      end
-    end)
-  end
 
   # here match property
   # and do stuff correspondingly
   return esc(:(
-    setproperty!(self.nodes[$node], $property, $val)
+    if $node != nothing
+      setproperty!(self.nodes[$node], $property, $val)
+    end
   ))
 end
 
-# use this if direction is predetermined and if in no
-# doubt that child is not nothing. Otherwise use set_child!
-#
-macro new_child(which, node, child)
+
+macro set_child_unchecked(which, node, child)
   return esc(quote
     @set $which $node $child
     @set :parent $child $node
   end)
+end
+
+
+macro set_child(node, child)
+
+  function set_child!( self::RBTree{T}
+                     , parent::Int64
+                     , child::Int64 ) where T
+    which = @get(:key, child) < @get(:key, parent) ?
+      (:left) : (:right)
+
+    @set_child_unchecked which parent child
+  end
+
+  function set_child!( self::RBTree{T}, ::Nothing
+                     , child::Int64 ) where T
+    @set :parent child nothing
+    self.root = child
+  end
+
+
+  return esc(:($set_child!(self, $node, $child)))
 end
 
 

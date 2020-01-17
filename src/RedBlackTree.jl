@@ -26,6 +26,9 @@ module RedBlackTree
   Node(key::T, parent::Union{Int64, Nothing}) where T =
     Node(red, key, 1, 0, 0, parent, nothing, nothing)
 
+  Node(key::T) where T =
+    Node(red, key, 1, 0, 0, nothing, nothing, nothing)
+
 
   mutable struct RBTree{T}
     root::Union{Int64, Nothing}
@@ -51,9 +54,10 @@ module RedBlackTree
   function Base.insert!(self::RBTree{T}, key::T) where T # {{{
     parent = get_leaf_and_update_count!(self, key)
 
-    child = add_node!(self, key, parent)
+    push!(self.nodes, Node(key))
+    child = length(self.nodes)
 
-    set_child!(self, parent, child)
+    @set_child parent child
 
     fixup!(self, child)
   end # }}}
@@ -168,15 +172,13 @@ module RedBlackTree
     @eval begin
       function $fn(self::RBTree{T}, rotator::Int64) where T
         rotating_child = @get $dirᵣₑᵥ rotator
-
         new_child = @get $dir rotating_child
-        @new_child $dirᵣₑᵥ rotator new_child
 
-        p = @get :parent rotator
-        @set :parent rotating_child p
-        set_child!(self, p, rotating_child)
+        @set_child_unchecked $dirᵣₑᵥ rotator new_child
 
-        @new_child $dir rotating_child rotator
+        @set_child @get(:parent, rotator) rotating_child
+
+        @set_child_unchecked $dir rotating_child rotator
 
         # rotator must be set first, because otherwise the
         # value for the rotating child will be wrong
