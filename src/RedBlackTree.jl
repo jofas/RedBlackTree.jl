@@ -2,70 +2,11 @@ module RedBlackTree
 
   export RBTree, geq
 
+
   import Base.==
 
-
-  export CapacityVector
-
-  mutable struct CapacityVector{T} # {{{
-    container::Vector{T}
-    capacity::Int64
-    ptr::Int64
-  end
-
-
-  CapacityVector{T}(capacity) where T =
-    CapacityVector{T}( Vector{T}(undef, capacity), capacity
-                     , 0 )
-
-
-  function Base.push!( self::CapacityVector{T}, item
-                     )::Int64 where T
-    increase_if_full!(self)
-    self.container[self.ptr += 1] = item
-    self.ptr
-  end
-
-
-  Base.getindex(self::CapacityVector{T}, key) where T =
-    self.container[key]
-
-
-  Base.setindex!(self::CapacityVector{T}, v, key) where T =
-    self.container[key] = v
-
-
-  Base.firstindex(self::CapacityVector{T}) where T = 1
-  Base.firstindex(self::CapacityVector{T}, d) where T = 1
-
-
-  Base.lastindex(self::CapacityVector{T}) where T =
-    size(self.container, 1)
-
-  Base.lastindex(self::CapacityVector{T}, d) where T =
-    size(self.container, d)
-
-
-  Base.length(::CapacityVector{T}) where T = 1
-
-
-  Base.iterate(self::CapacityVector{T}) where T =
-    (self, nothing)
-
-  Base.iterate(::CapacityVector{T}, ::Nothing) where T =
-    nothing
-
-
-  function increase_if_full!( self::CapacityVector{T}
-                            ) where T
-    if size(self.container, 1) - self.ptr < 1
-      append!( self.container
-             , Vector{T}(undef, self.capacity) )
-    end
-  end
-
-
-  # }}}
+  include("../CapacityVector.jl/src/CapacityVector.jl")
+  using .CapacityVector
 
 
   Base.Enums.@enum Color red black
@@ -114,7 +55,7 @@ module RedBlackTree
 
   mutable struct RBTree{T}
     root::Union{Int64, Nothing}
-    nodes::CapacityVector{Node{T}}
+    nodes::CVector{Node{T}}
     # need to be counted, because amount of nodes not
     # necessarily equal to the amount of insertions
     insertions::Int64
@@ -122,7 +63,7 @@ module RedBlackTree
 
 
   RBTree{T}(;capacity=2^15) where T =
-    RBTree{T}( nothing, CapacityVector{Node{T}}(capacity)
+    RBTree{T}( nothing, CVector{Node{T}}(capacity)
              , 0 )
 
 

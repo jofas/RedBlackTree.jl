@@ -5,6 +5,8 @@
 
 ## TODO
 
+* CapacityVector in own repo
+
 
 ## Benchmarks
 
