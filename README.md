@@ -15,3 +15,5 @@
 * CVector -> Vector: memory improvement for 1mil, time gain 
 
 * count\_left: slight time improvement for 1mil
+
+* Node homogenous: improvement for insert

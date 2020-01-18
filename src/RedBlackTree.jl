@@ -86,7 +86,5 @@ module RedBlackTree
 
 
   insertions(self::RBTree{T}) where T =
-    @get(:count, self.root) +
-    @get(:count_left, self.root) +
-    @get(:count_right, self.root)
+    @get :count_sum self.root
 end
