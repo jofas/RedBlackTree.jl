@@ -1,3 +1,15 @@
+macro increment(property, node)
+  return esc(:(
+    @set $property $node (@get($property, $node) + 1)
+  ))
+end
+
+
+macro is_nothing(property, node)
+  return esc(:(@get($property, $node) == nothing))
+end
+
+
 function get_leaf_and_update_count!( self::RBTree{T}
                                    , key::T ) where T
   i = self.root
@@ -22,9 +34,12 @@ function get_leaf_and_update_count!( self::RBTree{T}
 end
 
 
-is_left_child(self::RBTree{T}, i::Int64) where T =
+# needed in @get and @fixup
+is_left_child(self::RBTree{T}, i::Union{Int64, Nothing}
+             ) where T =
   i == @get(:left, @get(:parent, i))
 
 
-is_right_child(self::RBTree{T}, i::Int64) where T =
-  i == @get(:right, @get(:parent, i))
+is_right_child(self::RBTree{T}, i::Union{Int64, Nothing}
+              ) where T =
+  !is_left_child(self, i)

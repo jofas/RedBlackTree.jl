@@ -38,7 +38,7 @@ module RedBlackTree
 
   include("macros.jl")
   include("util.jl")
-
+  include("fixup.jl")
 
   RBTree{T}() where T =
     RBTree{T}(nothing, Vector{Node{T}}(undef, 0))
@@ -57,9 +57,7 @@ module RedBlackTree
     push!(self.nodes, Node(key))
     child = length(self.nodes)
 
-    @set_child parent child
-
-    fixup!(self, child)
+    fixup!(self, child, parent)
   end # }}}
 
 
@@ -86,106 +84,4 @@ module RedBlackTree
     @get(:count, self.root) +
     @get(:count_left, self.root) +
     @get(:count_right, self.root)
-
-
-  function fixup!(self::RBTree{T}, i::Int64) where T # {{{
-    while @get(:color, @get(:parent, i)) == red
-
-      p = @get :parent i
-      gp = @get :grandparent i
-
-
-      if is_left_child(self, p)
-
-        u = @get :uncle i
-
-        if @get(:color, u) == red
-
-          # case 1
-          @set :color p black
-          @set :color u black
-          @set :color gp red
-          i = gp
-        else
-
-          # case 2
-          if is_right_child(self, i)
-            i = p
-
-            left_rotate!(self, i)
-
-            p = @get :parent i
-            gp = @get :grandparent i
-          end
-
-          # case 3
-          @set :color p black
-          @set :color gp red
-          right_rotate!(self, gp)
-        end
-
-      else
-
-        u = @get :uncle i
-
-        if @get(:color, u) == red
-
-          # case 1
-          @set :color p black
-          @set :color u black
-          @set :color gp red
-          i = gp
-
-        else
-
-          # case 2
-          if is_left_child(self, i)
-            i = p
-
-            right_rotate!(self, i)
-
-            p = @get :parent i
-            gp = @get :grandparent i
-          end
-
-          # case 3
-          @set :color p black
-          @set :color gp red
-          left_rotate!(self, gp)
-        end
-
-      end
-    end
-
-    @set :color self.root black
-  end # }}}
-
-
-  # left_rotate! and right_rotate! {{{
-  for (dir, dirᵣₑᵥ, dir_count, dir_countᵣₑᵥ) in (
-    (:(:left), :(:right), :(:count_left), :(:count_right)),
-    (:(:right), :(:left), :(:count_right), :(:count_left))
-  )
-    fn = dir == :(:left) ? (:left_rotate!) :
-                           (:right_rotate!)
-
-    @eval begin
-      function $fn(self::RBTree{T}, rotator::Int64) where T
-        rotating_child = @get $dirᵣₑᵥ rotator
-        new_child = @get $dir rotating_child
-
-        @set_child_unchecked $dirᵣₑᵥ rotator new_child
-
-        @set_child @get(:parent, rotator) rotating_child
-
-        @set_child_unchecked $dir rotating_child rotator
-
-        # rotator must be set first, because otherwise the
-        # value for the rotating child will be wrong
-        @set_count $dir_countᵣₑᵥ rotator new_child
-        @set_count $dir_count rotating_child rotator
-      end
-    end
-  end
-  # }}}
 end
