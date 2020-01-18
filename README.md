@@ -5,6 +5,7 @@
 
 ## TODO
 
+* get allocs further down (maybe ```CapacityMatrix{Union{Int64, Nothing}}```)
 
 ## Benchmarks
 
