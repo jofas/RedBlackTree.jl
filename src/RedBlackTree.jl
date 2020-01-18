@@ -1,6 +1,6 @@
 module RedBlackTree
 
-  export RBTree, geq, insertions
+  export RBTree, geq, insertions, @count
 
 
   import Base.==
@@ -9,10 +9,7 @@ module RedBlackTree
   Base.Enums.@enum Color::Bool red black
 
 
-  mutable struct Node{T}
-    color::Color
-    key::T
-
+  mutable struct Node
     count::Int64
     count_left::Int64
     count_right::Int64
@@ -23,25 +20,26 @@ module RedBlackTree
   end
 
 
-  Node(key::T, parent::Union{Int64, Nothing}) where T =
-    Node(red, key, 1, 0, 0, parent, nothing, nothing)
-
-  Node(key::T) where T =
-    Node(red, key, 1, 0, 0, nothing, nothing, nothing)
+  Node() = Node(1, 0, 0, nothing, nothing, nothing)
 
 
   mutable struct RBTree{T}
     root::Union{Int64, Nothing}
-    nodes::Vector{Node{T}}
+    colors::Vector{Color}
+    keys::Vector{T}
+    nodes::Vector{Node}
   end
-
 
   include("macros.jl")
   include("util.jl")
   include("fixup.jl")
 
   RBTree{T}() where T =
-    RBTree{T}(nothing, Vector{Node{T}}(undef, 0))
+    RBTree{T}( nothing
+             , Vector{Color}(undef, 0)
+             , Vector{T}(undef, 0)
+             , Vector{Node}(undef, 0)
+             )
 
 
   Base.length(::RBTree{T}) where T = 1
@@ -54,7 +52,10 @@ module RedBlackTree
   function Base.insert!(self::RBTree{T}, key::T) where T # {{{
     parent = get_leaf_and_update_count!(self, key)
 
-    push!(self.nodes, Node(key))
+    push!(self.colors, red)
+    push!(self.keys, key)
+    push!(self.nodes, Node())
+
     child = length(self.nodes)
 
     fixup!(self, child, parent)
@@ -62,15 +63,19 @@ module RedBlackTree
 
 
   function geq(self::RBTree{T}, key::T)::Int64 where T # {{{
+
     count = 0
 
     i = self.root
     while i ≠ nothing
-      if key ≤ @get :key i
-
+      if key == @get :key i
         count += @get(:count, i) + @get(:count_right, i)
+        break
 
+      elseif key < @get :key i
+        count += @get(:count, i) + @get(:count_right, i)
         i = @get :left i
+
       else
         i = @get :right i
       end

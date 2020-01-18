@@ -9,7 +9,7 @@
 macro get(property, node)
 
   color(self::RBTree{T}, i::Int64) where T =
-    self.nodes[i].color
+    self.colors[i]
 
   color(::RBTree{T}, ::Nothing) where T = black
 
@@ -23,6 +23,9 @@ macro get(property, node)
 
   if property == :(:color)
     return esc(:($color(self, $node)))
+
+  elseif property == :(:key)
+    return esc(:(self.keys[$node]))
 
   elseif property == :(:count_sum)
     return esc(:($count_sum(self, $node)))
@@ -51,6 +54,10 @@ end
 
 
 macro set(property, node, val)
+
+  if property == :(:color)
+    return esc(:(self.colors[$node] = $val))
+  end
 
   # here match property
   # and do stuff correspondingly
