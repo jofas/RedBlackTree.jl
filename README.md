@@ -5,10 +5,6 @@
 
 ## TODO
 
-* Int64 -> Int
-
-* make test/test_insert with the example working with new structure
-
 * delete operation
 
 * write documentation
