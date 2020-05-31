@@ -15,8 +15,7 @@ macro get(property, node)
 
 
   count_sum(self::RBTree{T}, i::Int64) where T =
-    self.nodes[i].count + self.nodes[i].count_left +
-                          self.nodes[i].count_right
+    self.count[i] + self.count_left[i] + self.count_right[i]
 
   count_sum(::RBTree{T}, ::Nothing) where T = 0
 
@@ -26,6 +25,24 @@ macro get(property, node)
 
   elseif property == :(:key)
     return esc(:(self.keys[$node]))
+
+  elseif property == :(:parent)
+    return esc(:(self.parent[$node]))
+
+  elseif property == :(:left)
+    return esc(:(self.left[$node]))
+
+  elseif property == :(:right)
+    return esc(:(self.right[$node]))
+
+  elseif property == :(:count)
+    return esc(:(self.count[$node]))
+
+  elseif property == :(:count_left)
+    return esc(:(self.count_left[$node]))
+
+  elseif property == :(:count_right)
+    return esc(:(self.count_right[$node]))
 
   elseif property == :(:count_sum)
     return esc(:($count_sum(self, $node)))
@@ -57,13 +74,34 @@ macro set(property, node, val)
 
   if property == :(:color)
     return esc(:(self.colors[$node] = $val))
+
+  elseif property == :(:parent)
+    return esc(:(if $node != nothing self.parent[$node] = $val end))
+
+  elseif property == :(:count)
+    return esc(:(if $node != nothing self.count[$node] = $val end))
+
+  elseif property == :(:count_left)
+    return esc(:(if $node != nothing self.count_left[$node] = $val end))
+
+  elseif property == :(:count_right)
+    return esc(:(if $node != nothing self.count_right[$node] = $val end))
+
   end
 
-  # here match property
-  # and do stuff correspondingly
   return esc(:(
     if $node != nothing
-      setproperty!(self.nodes[$node], $property, $val)
+
+      # right and left must be matched here, because I use a variable
+      # in fixup/set_child! so can't put it ahead of the runtime
+
+      if $property == :right
+        self.right[$node] = $val
+      elseif $property == :left
+        self.left[$node] = $val
+      else
+        setproperty!(self.nodes[$node], $property, $val)
+      end
     end
   ))
 end

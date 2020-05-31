@@ -22,7 +22,7 @@ function tune_or_load!(suite::BenchmarkGroup)
     loadparams!(suite, params, :evals, :samples)
   else
     tune!(suite)
-    BenchmarkTools.save(FILE, params(suite))
+    BenchmarkTools.save(FILE, BenchmarkTools.params(suite))
   end
 end
 

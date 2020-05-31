@@ -1,6 +1,6 @@
 module RedBlackTree
 
-  export RBTree, geq, insertions, @count
+  export RBTree, geq, insertions
 
 
   import Base.==
@@ -10,24 +10,33 @@ module RedBlackTree
 
 
   mutable struct Node
+
     count::Int64
     count_left::Int64
     count_right::Int64
 
-    parent::Union{Int64, Nothing}
-    left::Union{Int64, Nothing}
-    right::Union{Int64, Nothing}
+    #parent::Union{Int64, Nothing}
+    #left::Union{Int64, Nothing}
+    #right::Union{Int64, Nothing}
   end
 
 
-  Node() = Node(1, 0, 0, nothing, nothing, nothing)
+  Node() = Node(1, 0, 0)#, nothing, nothing)
 
 
   mutable struct RBTree{T}
     root::Union{Int64, Nothing}
     colors::Vector{Color}
     keys::Vector{T}
-    nodes::Vector{Node}
+
+    parent::Vector{Union{Int64, Nothing}}
+    left::Vector{Union{Int64, Nothing}}
+    right::Vector{Union{Int64, Nothing}}
+
+    count::Vector{Int64}
+    count_left::Vector{Int64}
+    count_right::Vector{Int64}
+    #nodes::Vector{Node}
   end
 
   include("macros.jl")
@@ -38,7 +47,13 @@ module RedBlackTree
     RBTree{T}( nothing
              , Vector{Color}(undef, 0)
              , Vector{T}(undef, 0)
-             , Vector{Node}(undef, 0)
+             , Vector{Union{Int64, Nothing}}(undef, 0)
+             , Vector{Union{Int64, Nothing}}(undef, 0)
+             , Vector{Union{Int64, Nothing}}(undef, 0)
+             , Vector{Int64}(undef, 0)
+             , Vector{Int64}(undef, 0)
+             , Vector{Int64}(undef, 0)
+             #, Vector{Node}(undef, 0)
              )
 
 
@@ -54,9 +69,18 @@ module RedBlackTree
 
     push!(self.colors, red)
     push!(self.keys, key)
-    push!(self.nodes, Node())
 
-    child = length(self.nodes)
+    push!(self.parent, nothing)
+    push!(self.left, nothing)
+    push!(self.right, nothing)
+
+    push!(self.count, 1)
+    push!(self.count_left, 0)
+    push!(self.count_right, 0)
+
+    #push!(self.nodes, Node())
+
+    child = length(self.keys)
 
     fixup!(self, child, parent)
   end # }}}

@@ -6,11 +6,13 @@ function set_child!( self::RBTree{T}
     set_child!(self, node, child, :right)
 end
 
+
 function set_child!( self::RBTree{T}, ::Nothing
                    , child::Int64 ) where T
   @set :parent child nothing
   self.root = child
 end
+
 
 function set_child!( self::RBTree{T}
                    , node::Int64
@@ -50,14 +52,12 @@ for (dir, dirᵣₑᵥ, dir_count, dir_countᵣₑᵥ) in (
                                          , rotator )
     end
   end
-end
-# }}}
+end # }}}
 
 
 # fixup_cases_left! and fixup_cases_right! {{{
 for (dir, (c2_condition, c2_rotation, c3_rotation)) in (
-  (:left, (:is_right_child, :left_rotate!, :right_rotate!))
-  ,
+  (:left, (:is_right_child, :left_rotate!, :right_rotate!)),
   (:right, (:is_left_child, :right_rotate!, :left_rotate!))
 )
   fn = dir == :left ? (:fixup_cases_left!) :
@@ -100,11 +100,11 @@ for (dir, (c2_condition, c2_rotation, c3_rotation)) in (
 
     end
   end
-end
+end # }}}
 
 
 function fixup!( self::RBTree{T}, node::Int64
-                , parent::Union{Int64, Nothing} ) where T
+               , parent::Union{Int64, Nothing} ) where T
 
   set_child!(self, parent, node)
 
