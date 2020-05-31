@@ -1,6 +1,6 @@
 function set_child!( self::RBTree{T}
-                   , node::Int64
-                   , child::Int64 ) where T
+                   , node::Int
+                   , child::Int ) where T
   @get(:key, child) < @get(:key, node) ?
     set_child!(self, node, child, :left) :
     set_child!(self, node, child, :right)
@@ -8,15 +8,15 @@ end
 
 
 function set_child!( self::RBTree{T}, ::Nothing
-                   , child::Int64 ) where T
+                   , child::Int ) where T
   @set :parent child nothing
   self.root = child
 end
 
 
 function set_child!( self::RBTree{T}
-                   , node::Int64
-                   , child::Union{Int64, Nothing}
+                   , node::Int
+                   , child::Union{Int, Nothing}
                    , which::Symbol ) where T
   @set which   node  child
   @set :parent child node
@@ -32,7 +32,7 @@ for (dir, dirᵣₑᵥ, dir_count, dir_countᵣₑᵥ) in (
                          (:right_rotate!)
 
   @eval begin
-    function $fn(self::RBTree{T}, rotator::Int64) where T
+    function $fn(self::RBTree{T}, rotator::Int) where T
       rotating_child = @get $dirᵣₑᵥ rotator
       new_child = @get $dir rotating_child
 
@@ -64,7 +64,7 @@ for (dir, (c2_condition, c2_rotation, c3_rotation)) in (
                       (:fixup_cases_right!)
 
   @eval begin
-    function $fn(self::RBTree{T}, node::Int64) where T
+    function $fn(self::RBTree{T}, node::Int) where T
 
       p  = @get :parent node
       u  = @get :uncle node
@@ -103,8 +103,8 @@ for (dir, (c2_condition, c2_rotation, c3_rotation)) in (
 end # }}}
 
 
-function fixup!( self::RBTree{T}, node::Int64
-               , parent::Union{Int64, Nothing} ) where T
+function fixup!( self::RBTree{T}, node::Int
+               , parent::Union{Int, Nothing} ) where T
 
   set_child!(self, parent, node)
 

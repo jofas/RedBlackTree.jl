@@ -10,17 +10,17 @@ module RedBlackTree
 
 
   mutable struct RBTree{T}
-    root::Union{Int64, Nothing}
+    root::Union{Int, Nothing}
     color::Vector{Color}
     key::Vector{T}
 
-    parent::Vector{Union{Int64, Nothing}}
-    left::Vector{Union{Int64, Nothing}}
-    right::Vector{Union{Int64, Nothing}}
+    parent::Vector{Union{Int, Nothing}}
+    left::Vector{Union{Int, Nothing}}
+    right::Vector{Union{Int, Nothing}}
 
-    count::Vector{Int64}
-    count_left::Vector{Int64}
-    count_right::Vector{Int64}
+    count::Vector{Int}
+    count_left::Vector{Int}
+    count_right::Vector{Int}
   end
 
 
@@ -33,12 +33,12 @@ module RedBlackTree
     RBTree{T}( nothing
              , Vector{Color}(undef, 0)
              , Vector{T}(undef, 0)
-             , Vector{Union{Int64, Nothing}}(undef, 0)
-             , Vector{Union{Int64, Nothing}}(undef, 0)
-             , Vector{Union{Int64, Nothing}}(undef, 0)
-             , Vector{Int64}(undef, 0)
-             , Vector{Int64}(undef, 0)
-             , Vector{Int64}(undef, 0)
+             , Vector{Union{Int, Nothing}}(undef, 0)
+             , Vector{Union{Int, Nothing}}(undef, 0)
+             , Vector{Union{Int, Nothing}}(undef, 0)
+             , Vector{Int}(undef, 0)
+             , Vector{Int}(undef, 0)
+             , Vector{Int}(undef, 0)
              )
 
 
@@ -50,8 +50,6 @@ module RedBlackTree
 
 
   function Base.insert!(self::RBTree{T}, key::T) where T # {{{
-    parent = get_leaf_and_update_count!(self, key)
-
     push!(self.color, red)
     push!(self.key, key)
 
@@ -64,6 +62,8 @@ module RedBlackTree
     push!(self.count_right, 0)
 
     child = length(self.key)
+
+    parent = get_leaf_and_update_count!(self, key)
 
     fixup!(self, child, parent)
   end # }}}
@@ -89,7 +89,7 @@ module RedBlackTree
   )
 
     @eval begin
-      function $op(self::RBTree{T}, key::T)::Int64 where T
+      function $op(self::RBTree{T}, key::T)::Int where T
         count = 0
 
         i = self.root

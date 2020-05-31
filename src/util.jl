@@ -35,11 +35,11 @@ end
 
 
 # needed in @get and @fixup
-is_left_child(self::RBTree{T}, i::Union{Int64, Nothing}
+is_left_child(self::RBTree{T}, i::Union{Int, Nothing}
              ) where T =
   i == @get(:left, @get(:parent, i))
 
 
-is_right_child(self::RBTree{T}, i::Union{Int64, Nothing}
+is_right_child(self::RBTree{T}, i::Union{Int, Nothing}
               ) where T =
   !is_left_child(self, i)

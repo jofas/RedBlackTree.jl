@@ -8,13 +8,13 @@
 
 macro get(property, node) # {{{
 
-  color(self::RBTree{T}, i::Int64) where T =
+  color(self::RBTree{T}, i::Int) where T =
     self.color[i]
 
   color(::RBTree{T}, ::Nothing) where T = black
 
 
-  count_sum(self::RBTree{T}, i::Int64) where T =
+  count_sum(self::RBTree{T}, i::Int) where T =
     self.count[i] + self.count_left[i] + self.count_right[i]
 
   count_sum(::RBTree{T}, ::Nothing) where T = 0
