@@ -11,6 +11,7 @@ module RedBlackTree
 
   mutable struct RBTree{T}
     root::Union{Int, Nothing}
+
     color::Vector{Color}
     key::Vector{T}
 
@@ -53,23 +54,41 @@ module RedBlackTree
     parent, already_exists = get_leaf_and_update_count!(self, key)
 
     if !already_exists
-      push!(self.color, red)
-      push!(self.key, key)
+      child = add_node!(self, key)
 
-      push!(self.parent, nothing)
-      push!(self.left, nothing)
-      push!(self.right, nothing)
-
-      push!(self.count, 1)
-      push!(self.count_left, 0)
-      push!(self.count_right, 0)
-
-      child = nodes(self)
-
+      # build the pointer structure in order to maintain the tree
       fixup!(self, child, parent)
     end
   end # }}}
 
+
+  #=
+  function Base.delete!(self::RBTree{T}, key::T) where T # {{{
+    z = get_node(self, key)
+
+    if node ≠ nothing
+      y = z
+      y_color = @get :color y
+
+      if @get(:left, node) == nothing
+        x = @get :right z
+        transplant!(self, z, x)
+
+      elseif @get(:right, node) == nothing
+        x = @get :left z
+        transplant!(self, z, x)
+
+      else
+
+
+      end
+
+      if y_color == black
+        # delete_fixup
+      end
+    end
+  end # }}}
+  =#
 
   # ==, <, <=, >, >= {{{
   for (op, eq, l, r) in (
@@ -119,6 +138,28 @@ module RedBlackTree
 
   Base.size(self::RBTree{T}) where T =
     @get :count_sum self.root
+
+
+  # min and max {{{
+  for (fn, direction) in ((:min, :(:left)), (:max, :(:right)))
+    @eval begin
+      function Base.$fn(self::RBTree{T})::Union{T, Nothing} where T
+        i = self.root
+
+        while i ≠ nothing
+          child = @get $direction i
+
+          if child == nothing
+            break
+          else
+            i = child
+          end
+        end
+
+        i == nothing ? nothing : @get :key i
+      end
+    end
+  end # }}}
 
 
   nodes(self::RBTree{T}) where T = length(self.color)

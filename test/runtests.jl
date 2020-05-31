@@ -23,3 +23,17 @@ end
   insert!.(t, [1 for _ in 1:500])
   @test nodes(t) == 1
 end
+
+
+@testset "test min and max with randomly generated keys" begin
+  for i in 1:500
+    arr = rand(500)
+
+    t = RBTree{Float64}()
+
+    insert!.(t, arr)
+
+    @test min(t) == min(arr...)
+    @test max(t) == max(arr...)
+  end
+end

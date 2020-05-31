@@ -9,6 +9,6 @@
 
 * write documentation
 
-* search for a benchmark
+* codecov
 
 * publish
