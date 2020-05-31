@@ -6,10 +6,10 @@
 # (!)
 
 
-macro get(property, node)
+macro get(property, node) # {{{
 
   color(self::RBTree{T}, i::Int64) where T =
-    self.colors[i]
+    self.color[i]
 
   color(::RBTree{T}, ::Nothing) where T = black
 
@@ -19,30 +19,11 @@ macro get(property, node)
 
   count_sum(::RBTree{T}, ::Nothing) where T = 0
 
-
+  # here some properties are generated on the fly which are not part
+  # of the RBTree instance
+  #
   if property == :(:color)
     return esc(:($color(self, $node)))
-
-  elseif property == :(:key)
-    return esc(:(self.keys[$node]))
-
-  elseif property == :(:parent)
-    return esc(:(self.parent[$node]))
-
-  elseif property == :(:left)
-    return esc(:(self.left[$node]))
-
-  elseif property == :(:right)
-    return esc(:(self.right[$node]))
-
-  elseif property == :(:count)
-    return esc(:(self.count[$node]))
-
-  elseif property == :(:count_left)
-    return esc(:(self.count_left[$node]))
-
-  elseif property == :(:count_right)
-    return esc(:(self.count_right[$node]))
 
   elseif property == :(:count_sum)
     return esc(:($count_sum(self, $node)))
@@ -62,33 +43,22 @@ macro get(property, node)
   end
 
 
-  # here match property
-  # and do stuff correspondingly
   return esc(:(
-    getproperty(self.nodes[$node],$property)
+    getproperty(self, $property)[$node]
+  ))
+end # }}}
+
+
+macro set(property::QuoteNode, node, val)
+  return esc(:(
+    if $node != nothing
+      getproperty(self, $property)[$node] = $val
+    end
   ))
 end
 
 
-macro set(property, node, val)
-
-  if property == :(:color)
-    return esc(:(self.colors[$node] = $val))
-
-  elseif property == :(:parent)
-    return esc(:(if $node != nothing self.parent[$node] = $val end))
-
-  elseif property == :(:count)
-    return esc(:(if $node != nothing self.count[$node] = $val end))
-
-  elseif property == :(:count_left)
-    return esc(:(if $node != nothing self.count_left[$node] = $val end))
-
-  elseif property == :(:count_right)
-    return esc(:(if $node != nothing self.count_right[$node] = $val end))
-
-  end
-
+macro set(property::Symbol, node, val)
   return esc(:(
     if $node != nothing
 
@@ -99,8 +69,6 @@ macro set(property, node, val)
         self.right[$node] = $val
       elseif $property == :left
         self.left[$node] = $val
-      else
-        setproperty!(self.nodes[$node], $property, $val)
       end
     end
   ))

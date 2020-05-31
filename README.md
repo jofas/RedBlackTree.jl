@@ -5,16 +5,14 @@
 
 ## TODO
 
-* get allocs further down (maybe ```CapacityMatrix{Union{Int64, Nothing}}```)
+* Int64 -> Int
 
-## Benchmarks
+* make test/test_insert with the example working with new structure
 
-* api from varargs to dot syntax: invariant
+* delete operation
 
-* nodes in CapacityVector: approx 80% time, 90% memory improvement
+* write documentation
 
-* CVector -> Vector: memory improvement for 1mil, time gain 
+* search for a benchmark
 
-* count\_left: slight time improvement for 1mil
-
-* Node homogenous: improvement for insert
+* publish

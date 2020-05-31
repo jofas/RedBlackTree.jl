@@ -6,7 +6,7 @@ using Test
 
 
 #include("test_insert.jl")
-include("test_geq.jl")
+include("test_comparison_operators.jl")
 
 
 @testset "test insertions" begin

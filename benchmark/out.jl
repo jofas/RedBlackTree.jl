@@ -14,11 +14,11 @@ macro regression_out(result, baseline, sizes, criteria)
                  , comparison = true )
 
 
-      local res_geq  = criteria($result[s]["geq"])
-      local base_geq = criteria($baseline[string(s)]["geq"])
+      local res_geq  = criteria($result[s][">="])
+      local base_geq = criteria($baseline[string(s)][">="])
 
-      grouped_out( "baseline geq" => base_geq
-                 , "result geq" => res_geq
+      grouped_out( "baseline >=" => base_geq
+                 , "result >=" => res_geq
                  , comparison = true )
     end
   end)

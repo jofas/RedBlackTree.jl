@@ -30,7 +30,7 @@ end
 
   sizes = (size, sizes...)
   res = bench_regression(sizes)
-  @bench_out res sizes criteria ("insert", "geq")
+  @bench_out res sizes criteria ("insert", ">=")
 
   BenchmarkTools.save("baseline.json", res)
 end
@@ -59,11 +59,11 @@ function bench_regression(sizes)
   t = RBTree{Float64}()
 
   insert_(size, tree) = insert!.(tree, rand(size))
-  geq_(size, tree) = geq.(t, rand(size))
+  geq_(size, tree) = t .>= rand(size)
 
   suite = generate_suite( sizes
                         , "insert" => (insert_, t)
-                        , "geq" => (geq_, t) )
+                        , ">=" => (geq_, t) )
 
   tune_or_load!(suite)
 

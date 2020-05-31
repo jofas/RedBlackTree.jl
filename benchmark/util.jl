@@ -32,7 +32,7 @@ function tree_count(arr::Vector{Float64})
 
   insert!.(t, arr)
 
-  geq.(t, arr)
+  t .>= arr
 end
 
 
