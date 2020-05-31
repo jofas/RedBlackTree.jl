@@ -1,3 +1,0 @@
-[submodule "CapacityVector.jl"]
-	path = CapacityVector.jl
-	url = https://github.com/jofas/CapacityVector.jl
