@@ -57,38 +57,39 @@ module RedBlackTree
       child = add_node!(self, key)
 
       # build the pointer structure in order to maintain the tree
-      fixup!(self, child, parent)
+      insert_fixup!(self, child, parent)
     end
   end # }}}
 
 
-  #=
   function Base.delete!(self::RBTree{T}, key::T) where T # {{{
     z = get_node(self, key)
 
-    if node ≠ nothing
-      y = z
-      y_color = @get :color y
+    if z ≠ nothing
+      decrease_path!(self, z)
 
-      if @get(:left, node) == nothing
-        x = @get :right z
-        transplant!(self, z, x)
+      count = @get :count z
 
-      elseif @get(:right, node) == nothing
-        x = @get :left z
-        transplant!(self, z, x)
+      if count > 0
+        @decrement :count z
+      end
 
+
+      #= TODO
+      if count == 1
+
+        delete_node!(self, z)
+
+        # TODO: remove all the elements from the vectors (deleteat!)
+        #delete!
+        # not trivial with indices and broadcast
       else
-
-
+        @set(:count, z, count - 1)
       end
-
-      if y_color == black
-        # delete_fixup
-      end
+      =#
     end
   end # }}}
-  =#
+
 
   # ==, <, <=, >, >= {{{
   for (op, eq, l, r) in (

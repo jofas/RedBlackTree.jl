@@ -37,3 +37,42 @@ end
     @test max(t) == max(arr...)
   end
 end
+
+
+@testset "test delete when node has count > 1" begin
+  t = RBTree{Int}()
+
+  insert!.(t, [1, 1])
+
+  delete!(t, 1)
+
+  @test (t == 1) == 1
+end
+
+@testset "test delete with non-existent element" begin
+  t = RBTree{Int}()
+
+  insert!(t, 1)
+
+  delete!(t, 2)
+
+  @test size(t) == 1
+end
+
+
+@testset "test delete with randomly generated keys and >=" begin
+  arr = rand(500)
+
+  t = RBTree{Float64}()
+
+  insert!.(t, arr)
+
+  for i in 500:-1:1
+    delete!(t, arr[i])
+    pop!(arr)
+
+    cnt(arr) = [count(s -> s >= val, arr) for val in arr]
+
+    @test (t .>= arr) == cnt(arr)
+  end
+end

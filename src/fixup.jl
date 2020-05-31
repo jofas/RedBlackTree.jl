@@ -70,9 +70,8 @@ for (dir, (c2_condition, c2_rotation, c3_rotation)) in (
       u  = @get :uncle node
       gp = @get :grandparent node
 
+      # case 1
       if @get(:color, u) == red
-
-        # case 1
         @set :color p black
         @set :color u black
         @set :color gp red
@@ -103,8 +102,8 @@ for (dir, (c2_condition, c2_rotation, c3_rotation)) in (
 end # }}}
 
 
-function fixup!( self::RBTree{T}, node::Int
-               , parent::Union{Int, Nothing} ) where T
+function insert_fixup!( self::RBTree{T}, node::Int
+                      , parent::Union{Int, Nothing} ) where T
 
   set_child!(self, parent, node)
 
@@ -118,4 +117,73 @@ function fixup!( self::RBTree{T}, node::Int
   end
 
   @set :color self.root black
+end
+
+
+# delete_fixup_cases_left! and delete_fixup_cases_right! {{{
+for (dir, rev, c14_rotation, c3_rotation) in (
+  (:(:left), :(:right), :left_rotate!, :right_rotate!),
+  (:(:right), :(:left), :right_rotate!, :left_rotate!)
+)
+
+  fn = dir == :(:left) ? (:delete_fixup_cases_left!) :
+                         (:delete_fixup_cases_right!)
+
+  @eval begin
+    function $fn(self::RBTree{T}, node::Int) where T
+
+      p  = @get :parent node
+
+      w = @get $rev parent
+
+      # case 1
+      if @get(:color, w) == red
+        @set :color w black
+        @set :color p red
+        $c14_rotation(self, parent)
+        w = @get $rev p
+      end
+
+      l = @get :left w
+      r = @get :right w
+
+      # case 2
+      if @get(:color, l) == black && @get(:color, r) == black
+        @set :color w red
+        node = @get :parent node
+
+      # case 3
+      elseif @get(:color, @get($rev, w)) == black
+        @set :color @get($dir, w) black
+        @set :color w red
+        $c3_rotation(self, w)
+      end
+
+      # case 4
+      p = @get :parent node
+
+      c = @get $rev w
+
+      @set :color w @get(:color, p)
+      @set :color p black
+      @set :color c black
+      $c14_rotation(self, p)
+      node = self.root
+
+      node
+    end
+  end
+end # }}}
+
+
+function delete_fixup!(self::RBTree{T}, node::Int) where T
+  while node ≠ self.root && @get(:color, node) == black
+    if is_left_child(self, node)
+      node = delete_fixup_cases_left!(self, node)
+    else
+      node = delete_fixup_cases_right!(self, node)
+    end
+  end
+
+  @set :color node black
 end

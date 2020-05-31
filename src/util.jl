@@ -5,6 +5,13 @@ macro increment(property, node)
 end
 
 
+macro decrement(property, node)
+  return esc(:(
+    @set $property $node (@get($property, $node) - 1)
+  ))
+end
+
+
 macro is_nothing(property, node)
   return esc(:(@get($property, $node) == nothing))
 end
@@ -34,6 +41,21 @@ function get_leaf_and_update_count!(
   end
 
   (i, already_exists)
+end
+
+
+function decrease_path!(self::RBTree{T}, i::Int) where T
+  while i ≠ self.root
+    p = @get(:parent, i)
+
+    if is_left_child(self, i)
+      @decrement :count_left p
+    else
+      @decrement :count_right p
+    end
+
+    i = p
+  end
 end
 
 
@@ -76,6 +98,44 @@ function add_node!(self::RBTree{T}, key::T)::Int where T
 end
 
 
+function delete_node!(self::RBTree{T}, z::Int) where T
+  y = z
+  y_color = @get :color y
+
+  if @get(:left, z) == nothing
+    x = @get :right z
+    transplant!(self, z, x)
+
+  elseif @get(:right, z) == nothing
+    x = @get :left z
+    transplant!(self, z, x)
+
+  else
+    y = min_child(@get :right z)
+    y_color = @get :color y
+
+    x = @get :right y
+
+    if @get(:parent, y) == z
+      @set :parent x y
+    else
+      transplant!(self, y, @get :right y)
+      @set :right y @get(:right, z)
+      @set :right @get(:parent, @get(:right, z)) y
+    end
+
+    transplant!(self, z, y)
+    @set :left y :get(:left, z)
+    @set :left @get(:parent, y) y
+    @set :color y @get(:color, z)
+  end
+
+  if y_color == black
+    delete_fixup!(self, x)
+  end
+end
+
+
 function transplant!(self::RBTree{T}, node1::Int, node2::Int) where T
   node1_parent = @get :parent node1
 
@@ -93,7 +153,23 @@ function transplant!(self::RBTree{T}, node1::Int, node2::Int) where T
 end
 
 
-# needed in @get and @fixup
+function min_child( self::RBTree{T}, i::Union{Int, Nothing}
+                  )::Union{Int, Nothing} where T
+
+  while i ≠ nothing
+    child = @get :left i
+
+    if child == nothing
+      break
+    else
+      i = child
+    end
+  end
+
+  i
+end
+
+
 is_left_child(self::RBTree{T}, i::Union{Int, Nothing}
              ) where T =
   i == @get(:left, @get(:parent, i))
