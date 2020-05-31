@@ -10,14 +10,17 @@ macro is_nothing(property, node)
 end
 
 
-function get_leaf_and_update_count!( self::RBTree{T}
-                                   , key::T ) where T
+function get_leaf_and_update_count!(
+    self::RBTree{T}, key::T)::Tuple{Union{Int, Nothing}, Bool} where T
+
   i = self.root
+  already_exists = false
 
   while i ≠ nothing
 
     if key == @get :key i
       @increment :count i
+      already_exists = true
       break
 
     elseif key < @get :key i
@@ -30,7 +33,7 @@ function get_leaf_and_update_count!( self::RBTree{T}
     end
   end
 
-  i
+  (i, already_exists)
 end
 
 

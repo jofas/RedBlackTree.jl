@@ -1,6 +1,6 @@
 module RedBlackTree
 
-  export RBTree, insertions
+  export RBTree, nodes
 
 
   import Base.==, Base.<, Base.<=, Base.>, Base.>=
@@ -50,22 +50,24 @@ module RedBlackTree
 
 
   function Base.insert!(self::RBTree{T}, key::T) where T # {{{
-    push!(self.color, red)
-    push!(self.key, key)
+    parent, already_exists = get_leaf_and_update_count!(self, key)
 
-    push!(self.parent, nothing)
-    push!(self.left, nothing)
-    push!(self.right, nothing)
+    if !already_exists
+      push!(self.color, red)
+      push!(self.key, key)
 
-    push!(self.count, 1)
-    push!(self.count_left, 0)
-    push!(self.count_right, 0)
+      push!(self.parent, nothing)
+      push!(self.left, nothing)
+      push!(self.right, nothing)
 
-    child = length(self.key)
+      push!(self.count, 1)
+      push!(self.count_left, 0)
+      push!(self.count_right, 0)
 
-    parent = get_leaf_and_update_count!(self, key)
+      child = nodes(self)
 
-    fixup!(self, child, parent)
+      fixup!(self, child, parent)
+    end
   end # }}}
 
 
@@ -115,6 +117,9 @@ module RedBlackTree
   end # }}}
 
 
-  insertions(self::RBTree{T}) where T =
+  Base.size(self::RBTree{T}) where T =
     @get :count_sum self.root
+
+
+  nodes(self::RBTree{T}) where T = length(self.color)
 end
