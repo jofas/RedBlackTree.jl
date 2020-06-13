@@ -5,7 +5,7 @@
 
 ## TODO
 
-* delete operation
+* delete operation (write tests for all 4 cases in node deletion)
 
 * write documentation
 

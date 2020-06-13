@@ -27,7 +27,8 @@ module RedBlackTree
 
   include("macros.jl")
   include("util.jl")
-  include("fixup.jl")
+  include("insert.jl")
+  include("delete.jl")
 
 
   RBTree{T}() where T =
@@ -70,23 +71,17 @@ module RedBlackTree
 
       count = @get :count z
 
-      if count > 0
+      if count > 1
         @decrement :count z
-      end
 
-
-      #= TODO
-      if count == 1
+      elseif count == 1
 
         delete_node!(self, z)
 
         # TODO: remove all the elements from the vectors (deleteat!)
         #delete!
         # not trivial with indices and broadcast
-      else
-        @set(:count, z, count - 1)
       end
-      =#
     end
   end # }}}
 
